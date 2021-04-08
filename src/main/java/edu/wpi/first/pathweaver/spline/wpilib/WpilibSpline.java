@@ -16,6 +16,8 @@ import edu.wpi.first.wpilibj.trajectory.Trajectory;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryConfig;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.trajectory.TrajectoryUtil;
+import edu.wpi.first.wpilibj.trajectory.constraint.DifferentialDriveKinematicsConstraint;
+import edu.wpi.first.wpilibj.trajectory.constraint.TrajectoryConstraint;
 import javafx.beans.property.SimpleDoubleProperty;
 import javafx.scene.Group;
 import javafx.scene.Node;
@@ -111,9 +113,11 @@ public class WpilibSpline extends AbstractSpline {
         });
         try {
             var values = ProjectPreferences.getInstance().getValues();
-
+            var kinematics = new DifferentialDriveKinematics(values.getWheelBase());
             TrajectoryConfig config = new TrajectoryConfig(values.getMaxVelocity(), values.getMaxAcceleration())
-                .setKinematics(new DifferentialDriveKinematics(values.getWheelBase())).setReversed(waypoints.get(0).isReversed());
+                .setReversed(waypoints.get(0).isReversed())
+                .addConstraint(new DifferentialDriveKinematicsWithMinAdjustedMaxConstraint(kinematics, values.getMaxVelocity(), 2)); // 2 = Hard-coded value for CHAOS. Should make configurable in UI
+                
             Trajectory traj = trajectoryFromWaypoints(waypoints, config);
 
             var prefs = ProjectPreferences.getInstance();
